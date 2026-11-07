@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build connector zip
+        run: |
+          python3 - <<'EOF'
+          import zipfile
+          from pathlib import Path
+          tag = "${{ github.ref_name }}"
+          out = f"museneon-{tag}.zip"
+          include = ["skills", "custom-connectors", "docs", "scripts",
+                     "examples", "README.md", "LICENSE", "CONTRIBUTING.md"]
+          with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
+              for item in include:
+                  p = Path(item)
+                  if p.is_file():
+                      zf.write(p, p.name)
+                  elif p.is_dir():
+                      for f in sorted(p.rglob("*")):
+                          if f.is_file():
+                              zf.write(f, f)
+          print(f"built {out}")
+          EOF
+          ls -la museneon-*.zip
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "release ${{ github.ref_name }} already exists, skipping"
+            exit 0
+          fi
+          gh release create "${{ github.ref_name }}" \
+            --title "MuseNeon ${{ github.ref_name }}" \
+            --notes "Connector release. Install by asking Muse to install MuseNeon ${{ github.ref_name }} from https://github.com/reblox01/MuseNeon, or download the zip below and install it with scripts/install.sh. Push a new tag for each release." \
+            museneon-*.zip
