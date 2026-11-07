@@ -1,0 +1,5 @@
+name: neon
+title: MuseNeon Neon
+description: "Connect Muse to Neon: create and manage serverless Postgres projects, branches, databases, and roles through Neon's management API with a personal API key."
+category: Work and knowledge
+include_in_prompt: false
