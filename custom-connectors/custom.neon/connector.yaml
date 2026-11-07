@@ -1,0 +1,5 @@
+id: "custom.neon"
+title: "Neon"
+description: "Create and manage Neon serverless Postgres projects, branches, databases, and roles, and get the connection string a Postgres client needs, with a personal API key and your yes before anything is created or deleted."
+include_in_prompt: true
+require_auth: true
