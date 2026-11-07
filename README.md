@@ -1,6 +1,6 @@
-![MuseNeon banner](assets/banner-v3.webp)
-
 # MuseNeon
+
+![MuseNeon banner](assets/banner-v4.webp)
 
 **Neon, inside Muse.ai.**
 
