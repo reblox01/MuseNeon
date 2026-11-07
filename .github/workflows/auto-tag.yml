@@ -2,7 +2,7 @@ name: Auto tag
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     # Tag on any change except workflows, README, LICENSE, and assets.
     paths-ignore:
       - ".github/workflows/**"
