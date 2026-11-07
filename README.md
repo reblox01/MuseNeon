@@ -1,4 +1,4 @@
-![MuseNeon banner](assets/banner-v2.webp)
+![MuseNeon banner](assets/banner-v3.webp)
 
 # MuseNeon
 
