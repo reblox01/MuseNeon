@@ -19,13 +19,41 @@ to a Neon account, `list-projects` works, and the first real project
 
 ## Install
 
-Say this to Muse:
+### In Muse.ai: no terminal needed
+
+You do not download anything or run any command. Ask Muse to install
+it, and it fetches the skill and the connector from the repo. Paste
+this:
 
 ```
 Install MuseNeon v0.1.1 from https://github.com/reblox01/MuseNeon
 ```
 
-Or install it by hand:
+Then connect your Neon API key through Muse's secure flow (create one
+at console.neon.tech, developer settings, API keys), and verify with:
+
+```
+list-projects
+```
+
+Same install, other jobs:
+
+```
+Install MuseNeon v0.1.1 from https://github.com/reblox01/MuseNeon
+and create a project named my-app in eu-central-1.
+```
+
+```
+Install MuseNeon v0.1.1 from https://github.com/reblox01/MuseNeon
+and list my projects.
+```
+
+### On your own PC: terminal install
+
+Only for local setups with a terminal and a workspace folder, such as
+a local Muse or Claude Code install. This is not needed for Muse.ai.
+It copies the `neon` skill and the `custom.neon` connector into your
+Muse workspace.
 
 ```bash
 # Download the release zip from
@@ -34,14 +62,8 @@ Or install it by hand:
 ./scripts/install.sh
 ```
 
-That copies the `neon` skill and the `custom.neon` connector into your
-Muse workspace. Then connect your Neon API key through Muse's secure
-flow (create one at console.neon.tech, developer settings, API keys),
-and verify with:
-
-```
-list-projects
-```
+Then connect your Neon API key through Muse's secure flow, and verify
+with `list-projects`.
 
 ## How it works
 
