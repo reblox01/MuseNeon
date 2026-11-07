@@ -43,13 +43,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-sys.path.insert(0, "/opt/muse/skills/custom-connector-setup/bin")
-from dynamic_credentials import (
-    DynamicCredentialError,
-    add_surrogate_to_request,
-    ensure_allowed_url,
-)
-
 PROVIDER = "custom.neon"
 BASE = "https://console.neon.tech/api/v2"
 ALLOWED_HOSTS = ["console.neon.tech"]
@@ -161,23 +154,56 @@ def _strip_secrets(value):
     return value
 
 
+def _credentials():
+    """Load Muse's credential helpers, lazily.
+
+    ``dynamic_credentials`` only exists inside Muse, so the client
+    imports it on the first API call, not at module load. That keeps
+    ``--help`` working anywhere (including CI) and keeps the failure
+    outside Muse a clean ``NeonError`` instead of a traceback.
+    Returns (DynamicCredentialError, add_surrogate_to_request,
+    ensure_allowed_url).
+    """
+    bin_dir = "/opt/muse/skills/custom-connector-setup/bin"
+    if bin_dir not in sys.path:
+        sys.path.insert(0, bin_dir)
+    try:
+        from dynamic_credentials import (
+            DynamicCredentialError,
+            add_surrogate_to_request,
+            ensure_allowed_url,
+        )
+    except ImportError as error:
+        raise NeonError(
+            "dynamic_credentials is available only inside Muse; run this "
+            "client through the MuseNeon connector"
+        ) from error
+    return DynamicCredentialError, add_surrogate_to_request, ensure_allowed_url
+
+
 class Client:
     def __init__(self):
         self.opener = urllib.request.build_opener(NoRedirect())
 
     def _request(self, method, path, body=None, params=None):
+        # Raises NeonError here when run outside Muse; cred_error is
+        # bound before the try below, so the except can use it.
+        cred_error, add_surrogate, ensure_url = _credentials()
         url = BASE + path
         if params:
             query = {k: v for k, v in params.items() if v is not None}
             if query:
                 url += "?" + urllib.parse.urlencode(query)
-        ensure_allowed_url(url, ALLOWED_HOSTS)
-        data = json.dumps(body).encode("utf-8") if body is not None else None
-        headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
-        if data is not None:
-            headers["Content-Type"] = "application/json"
-        req = urllib.request.Request(url, data=data, headers=headers, method=method)
-        add_surrogate_to_request(req, PROVIDER, allowed_hosts=ALLOWED_HOSTS)
+        try:
+            ensure_url(url, ALLOWED_HOSTS)
+            data = json.dumps(body).encode("utf-8") if body is not None else None
+            headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
+            if data is not None:
+                headers["Content-Type"] = "application/json"
+            req = urllib.request.Request(url, data=data, headers=headers, method=method)
+            add_surrogate(req, PROVIDER, allowed_hosts=ALLOWED_HOSTS)
+        except cred_error as error:
+            raise NeonError(str(error)) from error
         try:
             return self._open(req)
         except urllib.error.HTTPError as error:
@@ -504,7 +530,7 @@ def main(argv=None):
             result = client.list_regions()
         else:  # pragma: no cover - argparse enforces the command
             raise NeonError(f"unknown command {args.command}")
-    except (NeonError, DynamicCredentialError) as error:
+    except NeonError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     print(json.dumps(result, indent=2, ensure_ascii=False))
